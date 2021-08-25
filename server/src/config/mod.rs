@@ -1,13 +1,18 @@
+use actix_web::web::Data;
+use sea_orm::{Database, DatabaseConnection, SqlxPostgresPoolConnection, SqlxPostgresConnector};
 use sqlx::migrate::Migrator;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Error, PgPool};
 
-pub type Pool = PgPool;
+use crate::errors::ApiError;
 
-pub async fn migrate_and_config_db(url: &str) -> Result<Pool, Error> {
+pub type Pool = Data<DatabaseConnection>;
+
+pub async fn migrate_and_config_db(admin_url: &str, api_url: &str) -> Result<Pool, ApiError> {
     info!("Migrating database...");
     let migrations: Migrator = sqlx::migrate!();
-    let pool = PgPoolOptions::new().connect(url).await?;
-    migrations.run(&pool).await?;
-    Ok(pool)
+    let admin_pool = PgPoolOptions::new().connect(admin_url).await?;
+    migrations.run(&admin_pool).await?;
+    admin_pool.close();
+    let api_pool: DatabaseConnection = SqlxPostgresConnector::connect(api_url).await.expect("oops");
+    Ok(Data::new(api_pool))
 }

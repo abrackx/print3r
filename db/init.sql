@@ -1,1 +1,10 @@
-CREATE DATABASE "print";
+CREATE DATABASE printer;
+
+CREATE USER api_user WITH ENCRYPTED PASSWORD 'password';
+
+GRANT CONNECT ON DATABASE printer TO api_user;
+GRANT USAGE ON SCHEMA public TO api_user;
+
+\c printer
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO api_user;

@@ -6,12 +6,12 @@ CREATE TABLE users (
   created_date TIMESTAMP NOT NULL
 );
 
-CREATE TABLE models (
+CREATE TABLE posts (
   id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT NOT NULL,
-  created_date TIMESTAMP NOT NULL,
-  modified_date TIMESTAMP NOT NULL
+  created_by INTEGER REFERENCES users(id) NOT NULL,
+  created_date TIMESTAMP NOT NULL
 );
 
 CREATE TABLE tags (
@@ -23,22 +23,26 @@ CREATE TABLE tags (
 
 CREATE TABLE files (
   id SERIAL NOT NULL PRIMARY KEY,
-  model_id INTEGER REFERENCES models(id) NOT NULL,
+  post_id INTEGER REFERENCES posts(id) NOT NULL,
   name TEXT NOT NULL,
-  created_date TIMESTAMP NOT NULL,
-  modified_date TIMESTAMP NOT NULL
+  url TEXT NOT NULL,
+  created_date TIMESTAMP NOT NULL
 );
 
 CREATE TABLE comments (
   id SERIAL NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL,
-  created_date TIMESTAMP NOT NULL,
-  modified_date TIMESTAMP NOT NULL
+  post_id INTEGER REFERENCES posts(id) NOT NULL,
+  content TEXT NOT NULL,
+  created_by INTEGER REFERENCES users(id) NOT NULL,
+  created_date TIMESTAMP NOT NULL
 );
 
-CREATE TABLE model_comments (
+CREATE TABLE images (
   id SERIAL NOT NULL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id) NOT NULL,
-  model_id INTEGER REFERENCES models(id) NOT NULL,
-  UNIQUE(user_id, model_id)
+  post_id INTEGER REFERENCES posts(id) NOT NULL,
+  name TEXT NOT NULL,
+  thumbnail_url TEXT,
+  full_res_url TEXT,
+  created_by INTEGER REFERENCES users(id) NOT NULL,
+  created_date TIMESTAMP NOT NULL
 );
