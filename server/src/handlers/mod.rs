@@ -4,6 +4,7 @@ use actix_web::HttpResponse;
 use serde::Serialize;
 
 mod posts;
+mod users;
 
 pub fn init(cfg: &mut ServiceConfig) {
     info!(
@@ -13,6 +14,7 @@ pub fn init(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/api/v1")
             .service(posts::get_all_posts)
+            .service(users::create_user)
     );
 }
 

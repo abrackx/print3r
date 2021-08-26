@@ -1,9 +1,8 @@
-use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
+use actix_web::http::StatusCode;
 use sqlx::Error as SqlxError;
-use thiserror::Error;
-use sea_orm::DbErr;
 use sqlx::migrate::MigrateError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ApiError {
