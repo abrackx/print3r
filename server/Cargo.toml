@@ -6,11 +6,11 @@ edition = "2018"
 
 [dependencies]
 actix-web = "4.0.0-beta.5"
-tokio = { version = "1.10.1", features = ["time"] }
+tokio = { version = "0.2", features = ["time"] }
 actix-service = "1.0.6"
 actix-multipart = "0.3"
 futures = "0.3.8"
-sqlx = { version = "0.4.1", features = [ "postgres", "runtime-actix-native-tls", "chrono" ] }
+sqlx = { version = "0.5.1", features = [ "postgres", "runtime-actix-native-tls", "chrono" ] }
 dotenv = "0.15.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0"

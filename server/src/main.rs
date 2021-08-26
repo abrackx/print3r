@@ -8,9 +8,6 @@ extern crate serde_derive;
 
 use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer};
-use tokio_compat_02::FutureExt;
-
-start_server().compat().await;
 
 mod auth;
 mod config;
@@ -31,7 +28,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
-            .app_data(pool.clone())
+            //if you use app_data there's an error
+            .data(pool.clone())
             .configure(handlers::init)
     })
     .bind("127.0.0.1:8888")?
