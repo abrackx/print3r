@@ -1,5 +1,5 @@
 [package]
-name = "print3r"
+name = "server"
 version = "0.1.0"
 authors = ["alex <abrackx@gmail.com>"]
 edition = "2018"
