@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, post, get};
+use actix_web::{HttpResponse, post, get, put};
 use actix_web::web::{Data, Json, Path};
 use reqwest::StatusCode;
 use sea_orm::{entity::*};
@@ -49,6 +49,24 @@ pub async fn create_user(
     let x = users::Entity::insert(new_user).exec(&db).await.expect("oops");
     Ok(json_response(
         x.last_insert_id,
+        StatusCode::CREATED,
+    ))
+}
+
+#[put("/users/{user_id}")]
+pub async fn update_user(
+    user_id: Path<u32>,
+    update_user: Json<users::CreateForm>,
+    db: Data<Pool>
+) -> Result<HttpResponse, ApiError> {
+    let user: Option<users::Model> = users::Entity::find_by_id(user_id.into_inner()).one(&db).await.expect("error!");
+    let mut user: users::ActiveModel = user.unwrap().into();
+    user.first_name = Set(String::from(&update_user.first_name));
+    user.last_name = Set(String::from(&update_user.last_name));
+    user.email = Set(String::from(&update_user.email));
+    let _user: users::ActiveModel = users::Entity::update(user).exec(&db).await.expect("error!");
+    Ok(json_response(
+        update_user, //Would like to get this to return the actual updated user instead of the input form.
         StatusCode::CREATED,
     ))
 }
