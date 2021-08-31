@@ -20,6 +20,13 @@ pub struct Model {
     pub created_date: DateTime,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct CreateForm {
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
     Id,
