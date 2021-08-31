@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, post, get, put};
+use actix_web::{HttpResponse, post, get, put, delete};
 use actix_web::web::{Data, Json, Path};
 use reqwest::StatusCode;
 use sea_orm::{entity::*};
@@ -67,6 +67,21 @@ pub async fn update_user(
     let _user: users::ActiveModel = users::Entity::update(user).exec(&db).await.expect("error!");
     Ok(json_response(
         update_user, //Would like to get this to return the actual updated user instead of the input form.
-        StatusCode::CREATED,
+        StatusCode::OK,
+    ))
+}
+
+#[delete("/users/{user_id}")]
+pub async fn delete_user(
+    mut user_id: Path<u32>,
+    db: Data<Pool>
+) -> Result<HttpResponse, ApiError> {
+    let user_id: u32 = user_id.into_inner();
+    let user: Option<users::Model> = users::Entity::find_by_id(user_id).one(&db).await.expect("error!");
+    let user: users::ActiveModel = user.unwrap().into();
+    user.delete(&db).await.expect("error!");
+    Ok(json_response(
+        user_id,
+        StatusCode::OK
     ))
 }

@@ -19,6 +19,7 @@ pub fn init(cfg: &mut ServiceConfig) {
             .service(users::get_user_by_id)
             .service(users::create_user)
             .service(users::update_user)
+            .service(users::delete_user)
     );
 }
 
