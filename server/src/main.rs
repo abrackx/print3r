@@ -32,7 +32,7 @@ async fn main() -> std::io::Result<()> {
             .data(pool.clone())
             .configure(handlers::init)
     })
-    .bind("127.0.0.1:8888")?
-    .run()
-    .await
+        .bind("127.0.0.1:8888")?
+        .run()
+        .await
 }

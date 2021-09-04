@@ -1,2 +1,2 @@
-mod authentication;
+pub(crate) mod authentication;
 mod tokens;

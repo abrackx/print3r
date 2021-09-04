@@ -5,6 +5,7 @@ use serde::Serialize;
 
 mod posts;
 mod users;
+mod auth;
 
 pub fn init(cfg: &mut ServiceConfig) {
     info!(
@@ -20,6 +21,7 @@ pub fn init(cfg: &mut ServiceConfig) {
             .service(users::create_user)
             .service(users::update_user)
             .service(users::delete_user)
+            .service(auth::start_auth)
     );
 }
 
