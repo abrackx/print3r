@@ -100,3 +100,9 @@ impl Related<super::images::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreatePost {
+    pub name: String,
+    pub description: String,
+}

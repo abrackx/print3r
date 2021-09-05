@@ -1,5 +1,6 @@
 use actix_web::{HttpResponse, ResponseError};
 use actix_web::http::StatusCode;
+use sea_orm::DbErr;
 use sqlx::Error as SqlxError;
 use sqlx::migrate::MigrateError;
 use thiserror::Error;
@@ -10,6 +11,8 @@ pub enum ApiError {
     Sqlx(#[from] SqlxError),
     #[error("Migrate error: {0}")]
     MigrateError(#[from] MigrateError),
+    #[error("SeaOrm error: {0}")]
+    DbErr(#[from] DbErr),
 }
 
 impl ApiError {
@@ -17,6 +20,7 @@ impl ApiError {
         match self {
             Self::Sqlx(x) => x.to_string(),
             Self::MigrateError(x) => x.to_string(),
+            Self::DbErr(x) => x.to_string(),
         }
     }
 }
@@ -27,6 +31,7 @@ impl ResponseError for ApiError {
         match *self {
             Self::Sqlx(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::MigrateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DbErr(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
