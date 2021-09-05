@@ -21,6 +21,6 @@ pub fn get_auth_redirect_url(challenge: String) -> String {
     code_challenge_method=S256&\
     client_id=xodFBsdfd2LQXzzaqac3979dnE8GhcEq&\
     redirect_uri=http://localhost:8888/api/v1/auth0_callback&\
-    scope=read:users&\
+    scope=openid profile email&\
     audience=https://dev-05tizgpa.us.auth0.com/api/v2/", challenge).to_string()
 }
