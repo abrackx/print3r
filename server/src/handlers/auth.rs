@@ -1,7 +1,7 @@
 use actix_web::{HttpResponse, post, get, put, delete, HttpRequest};
 use actix_web::web::{Data, Json, Path};
 use reqwest::StatusCode;
-use sea_orm::{entity::*};
+use sea_orm::{entity::*, QueryFilter};
 use chrono;
 
 use crate::config::Pool;
@@ -31,15 +31,16 @@ pub async fn start_auth() -> HttpResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-struct TokenRequest {
-    verifier: String,
-    auth_code: String
+pub struct AuthResponse {
+    access_token: String,
+    id_token: String,
+    expires_in: i32,
+    token_type: String,
 }
 
 #[get("/auth0_callback")]
 pub async fn get_token(request: HttpRequest) -> HttpResponse {
     let verifier = request.cookie("AUTH0_VERIFIER").unwrap().value().to_string();
-    println!("VERIFIER IN CALLBACK: {}", verifier);
     let auth_code = request.query_string().split("=").nth(1).unwrap().to_string();
     let req_body = [
         ("grant_type", "authorization_code".to_string()),
@@ -55,7 +56,36 @@ pub async fn get_token(request: HttpRequest) -> HttpResponse {
         .form(&req_body)
         .send()
         .await;
-    println!("AUTH RES: {}", auth_res.unwrap().text().await.unwrap());
-    let response = HttpResponse::Ok().finish();
+    let cookie = Cookie::build("ACCESS_TOKEN", auth_res.unwrap().json::<AuthResponse>().await.unwrap().access_token)
+        .http_only(true)
+        .path("/")
+        .finish();
+    let response = HttpResponse::PermanentRedirect()
+        .cookie(cookie)
+        .append_header(("location", "/api/v1/self"))
+        .finish();
     return response;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SelfResponse {
+    email: String,
+}
+
+#[get("/self")]
+pub async fn get_self(request: HttpRequest, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
+    let access_token = request.cookie("ACCESS_TOKEN").unwrap().value().to_string();
+    let client = reqwest::Client::new();
+    let res = client.get("https://dev-05tizgpa.us.auth0.com/userinfo")
+        .header("Authorization", format!("Bearer {}", access_token))
+        .send()
+        .await;
+    let email = res.unwrap().json::<SelfResponse>().await.unwrap().email;
+    let user: Option<serde_json::value::Value> = users::Entity::find()
+        .filter(users::Column::Email.contains(email.as_str()))
+        .into_json()
+        .one(&db)
+        .await
+        .expect("error!");
+    Ok(json_response(user, StatusCode::OK))
 }
