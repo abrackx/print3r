@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json, Path};
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::{HttpResponse, delete, get, post, put};
 use reqwest::StatusCode;
 use sea_orm::{EntityTrait, Set};
 use serde_json::Value;
@@ -53,6 +53,20 @@ pub async fn update_post(
     post.name = Set(update_post.name.to_owned());
     post.description = Set(update_post.description.to_owned());
     let _updated_post = posts::Entity::update(post).exec(&db).await?;
+    Ok(HttpResponse::new(StatusCode::ACCEPTED))
+}
+
+#[delete("/posts/{post_id}")]
+pub async fn delete_post(
+    post_id: Path<i32>,
+    db: Data<Pool>,
+) -> Result<HttpResponse, ApiError> {
+    let to_delete = posts::Entity::find_by_id(post_id.into_inner())
+        .one(&db)
+        .await?;
+    //todo: fix panic if id does not exist
+    let post: posts::ActiveModel = to_delete.unwrap().into();
+    let _updated_post = posts::Entity::delete(post).exec(&db).await?;
     Ok(HttpResponse::new(StatusCode::ACCEPTED))
 }
 

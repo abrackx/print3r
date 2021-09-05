@@ -16,6 +16,7 @@ pub fn init(cfg: &mut ServiceConfig) {
             .service(posts::get_all_posts)
             .service(posts::create_post)
             .service(posts::update_post)
+            .service(posts::delete_post)
             .service(users::get_all_users)
             .service(users::get_user_by_id)
             .service(users::create_user)
