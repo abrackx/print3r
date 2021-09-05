@@ -22,6 +22,7 @@ pub fn init(cfg: &mut ServiceConfig) {
             .service(users::update_user)
             .service(users::delete_user)
             .service(auth::start_auth)
+            .service(auth::get_token)
     );
 }
 
