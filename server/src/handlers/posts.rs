@@ -1,25 +1,27 @@
-use actix_web::web::{Data, Json, Path};
-use actix_web::{HttpResponse, delete, get, post, put};
-use reqwest::StatusCode;
-use sea_orm::{EntityTrait, Set};
-use serde_json::Value;
 use crate::config::Pool;
 use crate::entities::posts;
 use crate::entities::users;
 use crate::errors::ApiError;
 use crate::handlers::json_response;
+use crate::handlers::map_relationship_json;
+use actix_web::web::{Data, Json, Path};
+use actix_web::{delete, get, post, put, HttpResponse};
+use reqwest::StatusCode;
+use sea_orm::{EntityTrait, Set};
+use serde_json::Value;
 
 #[get("/posts")]
 pub async fn get_all_posts(db: Data<Pool>) -> Result<HttpResponse, ApiError> {
-    let all_posts = posts::Entity::find()
-            .find_with_related(users::Entity)
-            .into_json()
-            .all(&db)
-            .await?;
-    Ok(json_response(
-        all_posts.iter().map(|x| &x.0).collect::<Vec<&Value>>(),
-        StatusCode::OK,
-    ))
+    let mut all_posts = posts::Entity::find()
+        .find_with_related(users::Entity)
+        .into_json()
+        .all(&db)
+        .await?;
+    let results: Vec<Value> = all_posts
+        .iter_mut()
+        .map(|(post, user)| map_relationship_json(post, user, "created_by"))
+        .collect();
+    Ok(json_response(results, StatusCode::OK))
 }
 
 #[post("/posts")]
@@ -34,9 +36,7 @@ pub async fn create_post(
         created_date: Set(*&create_post.created_date),
         ..Default::default()
     };
-    let res = posts::Entity::insert(new_post)
-        .exec(&db)
-        .await?;
+    let res = posts::Entity::insert(new_post).exec(&db).await?;
     Ok(json_response(res.last_insert_id, StatusCode::OK))
 }
 
@@ -57,10 +57,7 @@ pub async fn update_post(
 }
 
 #[delete("/posts/{post_id}")]
-pub async fn delete_post(
-    post_id: Path<i32>,
-    db: Data<Pool>,
-) -> Result<HttpResponse, ApiError> {
+pub async fn delete_post(post_id: Path<i32>, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
     let to_delete = posts::Entity::find_by_id(post_id.into_inner())
         .one(&db)
         .await?;
@@ -69,4 +66,3 @@ pub async fn delete_post(
     let _updated_post = posts::Entity::delete(post).exec(&db).await?;
     Ok(HttpResponse::new(StatusCode::ACCEPTED))
 }
-
