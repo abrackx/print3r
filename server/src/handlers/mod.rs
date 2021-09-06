@@ -24,7 +24,7 @@ pub fn init(cfg: &mut ServiceConfig) {
             .service(users::get_user_by_id)
             .service(users::create_user)
             .service(users::update_user)
-            .service(users::delete_user)
+            .service(users::delete_user),
     );
 }
 
@@ -32,10 +32,23 @@ pub fn json_response<T: Serialize>(data: T, status: StatusCode) -> HttpResponse 
     HttpResponse::build(status).json(data)
 }
 
-pub fn map_relationship_json(parent: &Value, child: &Option<Value>, key: &str) -> Value {
+fn replace_json_values(parent: &Value, child: &Option<Value>, key: &str) -> Value {
     let mut new_parent = parent.clone();
     if let Some(replacable) = new_parent.get_mut(key) {
         *replacable = child.clone().unwrap_or(Value::Null);
     }
     new_parent
+}
+
+trait MapRelationshipJson {
+    fn map_relationship_json(&mut self, key: &str) -> Vec<Value>;
+}
+
+impl MapRelationshipJson for Vec<(Value, Option<Value>)> {
+    fn map_relationship_json(&mut self, key: &str) -> Vec<Value> {
+        return self
+            .iter_mut()
+            .map(|(parent, child)| replace_json_values(parent, child, key))
+            .collect::<Vec<Value>>();
+    }
 }

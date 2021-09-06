@@ -4,14 +4,15 @@ use crate::entities::posts;
 use crate::entities::users;
 use crate::errors::ApiError;
 use crate::handlers::json_response;
-use crate::handlers::map_relationship_json;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use reqwest::StatusCode;
 use sea_orm::ColumnTrait;
 use sea_orm::QueryFilter;
 use sea_orm::{EntityTrait, Set};
-use serde_json::Value;
+
+use crate::handlers::MapRelationshipJson;
+
 
 #[get("/posts")]
 pub async fn get_all_posts(db: Data<Pool>) -> Result<HttpResponse, ApiError> {
@@ -20,10 +21,7 @@ pub async fn get_all_posts(db: Data<Pool>) -> Result<HttpResponse, ApiError> {
         .into_json()
         .all(&db)
         .await?;
-    let results: Vec<Value> = all_posts
-        .iter_mut()
-        .map(|(post, user)| map_relationship_json(post, user, "created_by"))
-        .collect();
+    let results = all_posts.map_relationship_json("created_by");
     Ok(json_response(results, StatusCode::OK))
 }
 
