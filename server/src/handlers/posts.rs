@@ -1,4 +1,5 @@
 use crate::config::Pool;
+use crate::entities::comments;
 use crate::entities::posts;
 use crate::entities::users;
 use crate::errors::ApiError;
@@ -7,6 +8,8 @@ use crate::handlers::map_relationship_json;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, post, put, HttpResponse};
 use reqwest::StatusCode;
+use sea_orm::ColumnTrait;
+use sea_orm::QueryFilter;
 use sea_orm::{EntityTrait, Set};
 use serde_json::Value;
 
@@ -22,6 +25,31 @@ pub async fn get_all_posts(db: Data<Pool>) -> Result<HttpResponse, ApiError> {
         .map(|(post, user)| map_relationship_json(post, user, "created_by"))
         .collect();
     Ok(json_response(results, StatusCode::OK))
+}
+
+#[get("/posts/{post_id}")]
+pub async fn get_post_by_id(post_id: Path<i32>, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
+    let post = posts::Entity::find_by_id(post_id.into_inner())
+        .into_json()
+        .one(&db)
+        .await?;
+    match post {
+        Some(response) => Ok(json_response(response, StatusCode::OK)),
+        None => Err(ApiError::NotFound),
+    }
+}
+
+#[get("/posts/{post_id}/comments")]
+pub async fn get_post_comments(
+    post_id: Path<i32>,
+    db: Data<Pool>,
+) -> Result<HttpResponse, ApiError> {
+    let comments = comments::Entity::find()
+        .filter(comments::Column::PostId.eq(post_id.into_inner()))
+        .into_json()
+        .all(&db)
+        .await?;
+    Ok(json_response(comments, StatusCode::OK))
 }
 
 #[post("/posts")]
@@ -49,7 +77,10 @@ pub async fn update_post(
     let to_update = posts::Entity::find_by_id(post_id.into_inner())
         .one(&db)
         .await?;
-    let mut post: posts::ActiveModel = to_update.unwrap().into();
+    let mut post: posts::ActiveModel = match to_update {
+        Some(update) => update.into(),
+        None => return Err(ApiError::NotFound),
+    };
     post.name = Set(update_post.name.to_owned());
     post.description = Set(update_post.description.to_owned());
     let _updated_post = posts::Entity::update(post).exec(&db).await?;
@@ -61,8 +92,10 @@ pub async fn delete_post(post_id: Path<i32>, db: Data<Pool>) -> Result<HttpRespo
     let to_delete = posts::Entity::find_by_id(post_id.into_inner())
         .one(&db)
         .await?;
-    //todo: fix panic if id does not exist
-    let post: posts::ActiveModel = to_delete.unwrap().into();
+    let post: posts::ActiveModel = match to_delete {
+        Some(delete) => delete.into(),
+        None => return Err(ApiError::NotFound),
+    };
     let _updated_post = posts::Entity::delete(post).exec(&db).await?;
     Ok(HttpResponse::new(StatusCode::ACCEPTED))
 }

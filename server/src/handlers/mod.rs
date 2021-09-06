@@ -15,6 +15,8 @@ pub fn init(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/api/v1")
             .service(posts::get_all_posts)
+            .service(posts::get_post_by_id)
+            .service(posts::get_post_comments)
             .service(posts::create_post)
             .service(posts::update_post)
             .service(posts::delete_post)

@@ -16,6 +16,7 @@ mod handlers;
 mod entities;
 
 #[actix_web::main]
+#[allow(deprecated)]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     std::env::set_var("RUST_LOG", "info");

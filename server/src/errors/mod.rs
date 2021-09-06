@@ -1,11 +1,12 @@
-use actix_web::{HttpResponse, ResponseError};
 use actix_web::http::StatusCode;
+use actix_web::{HttpResponse, ResponseError};
 use sea_orm::DbErr;
-use sqlx::Error as SqlxError;
 use sqlx::migrate::MigrateError;
+use sqlx::Error as SqlxError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum ApiError {
     #[error("Sqlx error: {0}")]
     Sqlx(#[from] SqlxError),
@@ -13,14 +14,23 @@ pub enum ApiError {
     MigrateError(#[from] MigrateError),
     #[error("SeaOrm error: {0}")]
     DbErr(#[from] DbErr),
+    #[error("Object not found")]
+    NotFound,
+    #[error("Access denied")]
+    Forbidden,
+    #[error("Unknown error")]
+    Unknown,
 }
 
 impl ApiError {
     pub fn name(&self) -> String {
         match self {
-            Self::Sqlx(x) => x.to_string(),
-            Self::MigrateError(x) => x.to_string(),
-            Self::DbErr(x) => x.to_string(),
+            Self::Sqlx(err) => err.to_string(),
+            Self::MigrateError(err) => err.to_string(),
+            Self::DbErr(err) => err.to_string(),
+            Self::NotFound => "NotFound".to_string(),
+            Self::Forbidden => "Forbidden".to_string(),
+            Self::Unknown => "Unknown".to_string(),
         }
     }
 }
@@ -32,6 +42,9 @@ impl ResponseError for ApiError {
             Self::Sqlx(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::MigrateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::DbErr(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::Forbidden => StatusCode::UNAUTHORIZED,
+            Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
