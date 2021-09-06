@@ -33,6 +33,7 @@ pub async fn get_post_by_id(post_id: Path<i32>, db: Data<Pool>) -> Result<HttpRe
         .into_json()
         .one(&db)
         .await?;
+    //is there a better way?
     match post {
         Some(response) => Ok(json_response(response, StatusCode::OK)),
         None => Err(ApiError::NotFound),
@@ -77,10 +78,7 @@ pub async fn update_post(
     let to_update = posts::Entity::find_by_id(post_id.into_inner())
         .one(&db)
         .await?;
-    let mut post: posts::ActiveModel = match to_update {
-        Some(update) => update.into(),
-        None => return Err(ApiError::NotFound),
-    };
+    let mut post: posts::ActiveModel = to_update.ok_or(ApiError::NotFound)?.into();
     post.name = Set(update_post.name.to_owned());
     post.description = Set(update_post.description.to_owned());
     let _updated_post = posts::Entity::update(post).exec(&db).await?;
@@ -92,10 +90,7 @@ pub async fn delete_post(post_id: Path<i32>, db: Data<Pool>) -> Result<HttpRespo
     let to_delete = posts::Entity::find_by_id(post_id.into_inner())
         .one(&db)
         .await?;
-    let post: posts::ActiveModel = match to_delete {
-        Some(delete) => delete.into(),
-        None => return Err(ApiError::NotFound),
-    };
+    let post: posts::ActiveModel = to_delete.ok_or(ApiError::NotFound)?.into();
     let _updated_post = posts::Entity::delete(post).exec(&db).await?;
     Ok(HttpResponse::new(StatusCode::ACCEPTED))
 }
