@@ -6,6 +6,7 @@ use serde_json::Value;
 
 mod posts;
 mod users;
+mod comments;
 
 pub fn init(cfg: &mut ServiceConfig) {
     info!(
@@ -20,6 +21,9 @@ pub fn init(cfg: &mut ServiceConfig) {
             .service(posts::create_post)
             .service(posts::update_post)
             .service(posts::delete_post)
+            .service(comments::create_comment)
+            .service(comments::update_comment)
+            .service(comments::delete_comment)
             .service(users::get_all_users)
             .service(users::get_user_by_id)
             .service(users::create_user)

@@ -11,7 +11,7 @@ impl EntityName for Entity {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel)]
+#[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel, Serialize, Deserialize)]
 pub struct Model {
     pub id: i32,
     pub post_id: i32,
@@ -87,3 +87,10 @@ impl Related<super::posts::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Deserialize)]
+pub struct CreateComment {
+    pub post_id: i32,
+    pub content: String,
+    pub created_by: i32,
+}

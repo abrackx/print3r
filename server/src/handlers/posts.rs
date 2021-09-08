@@ -13,7 +13,6 @@ use sea_orm::{EntityTrait, Set};
 
 use crate::handlers::MapRelationshipJson;
 
-
 #[get("/posts")]
 pub async fn get_all_posts(db: Data<Pool>) -> Result<HttpResponse, ApiError> {
     let mut all_posts = posts::Entity::find()
@@ -43,12 +42,18 @@ pub async fn get_post_comments(
     post_id: Path<i32>,
     db: Data<Pool>,
 ) -> Result<HttpResponse, ApiError> {
-    let comments = comments::Entity::find()
-        .filter(comments::Column::PostId.eq(post_id.into_inner()))
+    let post = posts::Entity::find_by_id(post_id.into_inner())
+        .one(&db)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let mut comments = comments::Entity::find()
+        .find_with_related(users::Entity)
+        .filter(comments::Column::PostId.eq(post.id))
         .into_json()
         .all(&db)
         .await?;
-    Ok(json_response(comments, StatusCode::OK))
+    let results = comments.map_relationship_json("created_by");
+    Ok(json_response(results, StatusCode::OK))
 }
 
 #[post("/posts")]
@@ -89,6 +94,6 @@ pub async fn delete_post(post_id: Path<i32>, db: Data<Pool>) -> Result<HttpRespo
         .one(&db)
         .await?;
     let post: posts::ActiveModel = to_delete.ok_or(ApiError::NotFound)?.into();
-    let _updated_post = posts::Entity::delete(post).exec(&db).await?;
+    let _deleted_post = posts::Entity::delete(post).exec(&db).await?;
     Ok(HttpResponse::new(StatusCode::ACCEPTED))
 }
