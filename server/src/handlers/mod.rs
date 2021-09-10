@@ -2,6 +2,7 @@ use actix_web::http::StatusCode;
 use actix_web::web::{scope, ServiceConfig};
 use actix_web::HttpResponse;
 use serde::Serialize;
+use crate::auth::middleware::AuthRoute;
 
 mod posts;
 mod users;

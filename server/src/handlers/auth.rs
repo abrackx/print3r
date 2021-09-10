@@ -9,6 +9,7 @@ use crate::entities::*;
 use crate::errors::ApiError;
 use crate::handlers::json_response;
 use crate::auth::authentication;
+use crate::auth::middleware::AuthRoute;
 use actix_web::cookie::Cookie;
 use std::borrow::Borrow;
 use serde_json::de::Read;
@@ -73,7 +74,7 @@ pub struct SelfResponse {
 }
 
 #[get("/self")]
-pub async fn get_self(request: HttpRequest, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
+pub async fn get_self(_: AuthRoute, request: HttpRequest, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
     let access_token = request.cookie("ACCESS_TOKEN").unwrap().value().to_string();
     let client = reqwest::Client::new();
     let res = client.get("https://dev-05tizgpa.us.auth0.com/userinfo")

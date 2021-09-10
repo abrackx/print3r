@@ -24,3 +24,4 @@ pub fn get_auth_redirect_url(challenge: String) -> String {
     scope=openid profile email&\
     audience=https://dev-05tizgpa.us.auth0.com/api/v2/", challenge).to_string()
 }
+
