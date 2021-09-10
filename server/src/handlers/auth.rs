@@ -74,19 +74,6 @@ pub struct SelfResponse {
 }
 
 #[get("/self")]
-pub async fn get_self(_: AuthRoute, request: HttpRequest, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
-    let access_token = request.cookie("ACCESS_TOKEN").unwrap().value().to_string();
-    let client = reqwest::Client::new();
-    let res = client.get("https://dev-05tizgpa.us.auth0.com/userinfo")
-        .header("Authorization", format!("Bearer {}", access_token))
-        .send()
-        .await;
-    let email = res.unwrap().json::<SelfResponse>().await.unwrap().email;
-    let user: Option<serde_json::value::Value> = users::Entity::find()
-        .filter(users::Column::Email.contains(email.as_str()))
-        .into_json()
-        .one(&db)
-        .await
-        .expect("error!");
-    Ok(json_response(user, StatusCode::OK))
+pub async fn get_self(authentication: AuthRoute, request: HttpRequest, db: Data<Pool>) -> Result<HttpResponse, ApiError> {
+    Ok(json_response(authentication.user, StatusCode::OK))
 }
